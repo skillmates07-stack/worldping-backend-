@@ -12,14 +12,14 @@ const PORT = process.env.PORT || 3001
 app.use(helmet())
 app.use(compression())
 app.use(cors({
-  origin: process.env.FRONTEND_URL || 'https://worldping.netlify.app',
+  origin: process.env.FRONTEND_URL || '*',
   credentials: true
 }))
 
 // Rate limiting
 const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // limit each IP to 100 requests per windowMs
+  windowMs: 15 * 60 * 1000,
+  max: 100,
   message: 'Too many requests, please try again later.'
 })
 app.use('/api/', limiter)
@@ -28,10 +28,19 @@ app.use('/api/', limiter)
 app.use(express.json({ limit: '10kb' }))
 app.use(express.urlencoded({ extended: true, limit: '10kb' }))
 
-// Routes
-app.use('/api/messages', require('./src/routes/messages'))
-app.use('/api/votes', require('./src/routes/votes'))
-app.use('/health', require('./src/routes/health'))
+// Health check route
+app.get('/health', (req, res) => {
+  res.status(200).json({ 
+    status: 'healthy',
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime()
+  })
+})
+
+// API routes
+app.get('/api/test', (req, res) => {
+  res.json({ message: 'WorldPing API is running!' })
+})
 
 // Error handler
 app.use((err, req, res, next) => {
